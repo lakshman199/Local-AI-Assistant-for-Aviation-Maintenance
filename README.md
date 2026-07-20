@@ -1,4 +1,4 @@
-# Local AI Assistant for Aviation Maintenance
+# Maintenance Task Search System
 
 An offline Retrieval-Augmented Generation (RAG) prototype that helps users search aviation maintenance documentation and generate context-grounded answers using locally hosted AI models.
 
