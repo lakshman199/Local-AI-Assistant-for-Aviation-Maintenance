@@ -1,464 +1,261 @@
-# Maintenance Task Search System
+# Aircraft Maintenance Task Search System
+### Compliance-Preserving AI Retrieval System for Aircraft Maintenance Manuals
 
-An offline Retrieval-Augmented Generation (RAG) prototype that helps users search aviation maintenance documentation and generate context-grounded answers using locally hosted AI models.
+An AI-powered semantic retrieval system that helps Aircraft Maintenance Technicians (AMTs) quickly locate certified maintenance procedures using natural-language queries while preserving regulatory compliance.
 
-> **Important:** This project is an educational prototype. It does not replace approved aircraft maintenance manuals, engineering instructions, regulatory requirements, or authorized maintenance decisions.
+Instead of replacing OEM maintenance manuals or generating maintenance instructions, the system acts as an intelligent search layer that retrieves, ranks, and previews the most relevant maintenance tasks before opening the official certified documentation.
 
 ---
 
 ## Overview
 
-Aviation maintenance professionals work with long technical manuals that contain procedures, warnings, inspection guidance, troubleshooting steps, and safety information.
+Aircraft maintenance manuals contain thousands of highly structured procedures organized using Air Transport Association (ATA) chapters. Technicians often spend significant time locating the correct task because procedures are deeply nested and many have similar names.
 
-Finding the right section for a specific maintenance question can require manually searching through large documents. Using public AI services may also be unsuitable when organizations need to keep internal technical documentation private.
-
-This project demonstrates a local RAG pipeline that:
-
-- Processes aviation maintenance documents locally
-- Creates semantic embeddings without an external API
-- Stores document embeddings in a local vector database
-- Retrieves passages relevant to a user question
-- Generates an answer using a locally running language model
+This project improves maintenance task retrieval by combining semantic search, multilingual embeddings, and LLM-based re-ranking while ensuring technicians always reference the original certified manual.
 
 ---
 
 ## Problem
 
-Aircraft maintenance manuals are detailed, structured, and procedure-heavy. Users may need to search across many pages before locating the information relevant to a specific question.
+Aircraft technicians frequently encounter challenges such as:
 
-A general-purpose AI assistant may generate a plausible answer without grounding it in the approved technical document. Sending internal manuals to an external AI provider may also introduce privacy and data-control concerns.
+- Large maintenance manuals containing thousands of tasks
+- Deep ATA chapter hierarchies
+- Similar task names across aircraft systems
+- Traditional keyword search missing relevant procedures
+- Strict aviation regulations preventing AI-generated maintenance instructions
 
-This project addresses those problems by combining semantic retrieval with a locally hosted language model.
-
----
-
-## Target Users
-
-This prototype is relevant to:
-
-- Aviation maintenance technicians
-- Maintenance, Repair, and Overhaul teams
-- Maintenance planners
-- Technical publications personnel
-- Engineering support teams
-- Organizations exploring private document-search systems
+The objective was to improve search efficiency without modifying certified OEM documentation.
 
 ---
 
-## What the System Does
+# Solution
 
-The system follows this workflow:
+Built a compliance-preserving retrieval system that:
 
-1. Loads an aviation maintenance PDF.
-2. Splits the document into overlapping text chunks.
-3. Converts the chunks into semantic embeddings.
-4. Stores the embeddings in ChromaDB.
-5. Converts the user's question into an embedding.
-6. Retrieves the most relevant document passages.
-7. Adds the retrieved passages to a constrained prompt.
-8. Sends the prompt to a locally running Phi-3 model through Ollama.
-9. Returns an answer based on the retrieved context.
+- Converts aircraft maintenance manuals into structured task knowledge
+- Creates revision-robust semantic embeddings using ATA hierarchy and task metadata
+- Performs dense semantic retrieval
+- Uses an LLM only for candidate re-ranking
+- Opens the selected task directly in the certified OEM viewer
+- Preserves full traceability and regulatory compliance
 
 ---
 
-## Architecture
+# System Architecture
 
-```text
-Aviation Maintenance Manual
-            |
-            v
-        PDF Loader
-            |
-            v
-  Recursive Text Splitter
-            |
-            v
- MiniLM Semantic Embeddings
-            |
-            v
-   Local ChromaDB Index
-            |
-            v
-   Top-K Similarity Search
-            |
-            v
- Context-Constrained Prompt
-            |
-            v
-   Phi-3 through Ollama
-            |
-            v
-      Generated Answer
 ```
+                OFFLINE PIPELINE
 
----
+Maintenance Manuals (PDF)
+          │
+          ▼
+OCR & Layout Extraction
+          │
+          ▼
+Vision Language Parsing
+          │
+          ▼
+Task Knowledge Structuring
+          │
+          ▼
+Embedding Generation
+          │
+          ▼
+Task Knowledge Database
 
-## Technology Stack
 
-| Component | Technology |
-|---|---|
-| Programming Language | Python |
-| Local LLM Runtime | Ollama |
-| Language Model | Phi-3 |
-| Embedding Model | `all-MiniLM-L6-v2` |
-| Vector Database | ChromaDB |
-| PDF Loading | LangChain `PyPDFLoader` |
-| Text Splitting | `RecursiveCharacterTextSplitter` |
-| Development Environment | Jupyter Notebook / VS Code |
 
----
+                ONLINE PIPELINE
 
-## Key Design Decisions
-
-### Local Language Model
-
-Phi-3 is executed through Ollama so that document context, user questions, and generated answers can remain on the local machine.
-
-### Local Embeddings
-
-The project uses the Hugging Face `all-MiniLM-L6-v2` model to generate semantic embeddings without relying on an external embedding API.
-
-### Overlapping Text Chunks
-
-The document is divided into chunks of approximately 1,000 characters with a 100-character overlap.
-
-The overlap helps preserve information that may continue across chunk boundaries.
-
-### Persistent Vector Storage
-
-ChromaDB is used to store document embeddings locally. Persistent storage allows the existing document index to be reused instead of rebuilding it for every query.
-
-### Custom Retrieval and Generation Loop
-
-The project manually controls:
-
-- Query embedding
-- Similarity retrieval
-- Context assembly
-- Prompt construction
-- Local model invocation
-
-This provides more visibility into the RAG pipeline than relying entirely on a high-level question-answering wrapper.
-
-### Context-Constrained Prompting
-
-The model is instructed to answer only from the retrieved document excerpts.
-
-This can reduce unsupported output, but it does not guarantee correctness. Formal groundedness and answer-quality evaluation remain future work.
-
----
-
-## Example Query
-
-```text
-What are the common causes of corrosion on an aircraft?
-```
-
-The system retrieves the most relevant passages from the indexed maintenance document and sends those passages to the local model as supporting context.
-
----
-
-## Project Structure
-
-```text
-Local_AI-Assistant_Offline_RAG_Pipeline/
-├── mro_rag.ipynb
-├── manual.pdf
-├── README.md
-├── requirements.txt
-└── .gitignore
+Technician Query
+        │
+        ▼
+Semantic Retrieval
+        │
+        ▼
+Top-50 Candidate Tasks
+        │
+        ▼
+LLM Re-ranking
+        │
+        ▼
+Top Ranked Tasks
+        │
+        ▼
+Task Preview
+        │
+        ▼
+Certified OEM Viewer
 ```
 
 ---
 
-## Installation
+# Key Features
 
-### 1. Clone the Repository
-
-```bash
-git clone https://github.com/lakshman199/Local_AI-Assistant_Offline_RAG_Pipeline.git
-cd Local_AI-Assistant_Offline_RAG_Pipeline
-```
-
-### 2. Create a Virtual Environment
-
-#### Windows
-
-```bash
-python -m venv venv
-venv\Scripts\activate
-```
-
-#### macOS or Linux
-
-```bash
-python3 -m venv venv
-source venv/bin/activate
-```
-
-### 3. Install Python Dependencies
-
-```bash
-pip install langchain langchain-community langchain-text-splitters pypdf chromadb sentence-transformers
-```
-
-You can also create a `requirements.txt` file containing:
-
-```text
-langchain
-langchain-community
-langchain-text-splitters
-pypdf
-chromadb
-sentence-transformers
-jupyter
-```
-
-Then install the dependencies with:
-
-```bash
-pip install -r requirements.txt
-```
-
-### 4. Install Ollama
-
-Install Ollama for your operating system.
-
-After installation, download the Phi-3 model:
-
-```bash
-ollama pull phi3
-```
-
-Confirm that Ollama is working:
-
-```bash
-ollama run phi3
-```
-
-### 5. Add the Technical Manual
-
-Place the PDF file in the project directory.
-
-Update the file path in the notebook when necessary:
-
-```python
-pdf_path = "manual.pdf"
-```
+- Semantic search for aircraft maintenance tasks
+- Revision-robust embeddings using ATA metadata
+- Natural-language search
+- Multilingual retrieval (English & Korean)
+- LLM-assisted ranking
+- Compliance-preserving architecture
+- Certified OEM viewer integration
+- Rule-based document structuring
+- Vision-Language document parsing
+- Fail-safe dense retrieval fallback
+- Task preview before document navigation
 
 ---
 
-## Running the Project
+# Tech Stack
 
-1. Start Ollama.
-2. Open `mro_rag.ipynb` in Jupyter Notebook or VS Code.
-3. Run the notebook cells in order.
-4. Confirm that the PDF is loaded successfully.
-5. Allow the embedding model to download when it runs for the first time.
-6. Wait for the ChromaDB vector index to be created.
-7. Replace the sample question with your own aviation maintenance question.
-8. Run the retrieval and generation cells.
+### Programming
+
+- Python
+
+### AI / Machine Learning
+
+- Sentence Transformers
+- BGE-M3 Multilingual Embeddings
+- Qwen3
+- Llama 3.3
+- Qwen2.5-VL
+- Dense Vector Retrieval
+
+### NLP
+
+- Semantic Search
+- Embedding Models
+- LLM Re-ranking
+- Cross-lingual Retrieval
+
+### Computer Vision
+
+- Vision Language Models
+- OCR
+- Layout Extraction
+
+### Data
+
+- Aircraft Maintenance Manuals (AMM)
+- Fault Isolation Manuals (FIM)
+- ATA Hierarchy
+
+---
+
+# How Retrieval Works
+
+1. Technician enters a natural-language maintenance problem.
 
 Example:
 
-```python
-query = "What are the common causes of corrosion on an aircraft?"
+```
+Landing gear is not retracting properly
+```
+
+2. The embedding engine retrieves the most relevant maintenance tasks.
+
+3. The LLM re-ranks candidate tasks using only:
+
+- ATA IDs
+- Task titles
+- ATA hierarchy
+
+No maintenance procedures are provided to the LLM.
+
+4. The technician reviews the ranked task list.
+
+5. The selected task opens directly inside the certified OEM maintenance manual.
+
+---
+
+# Safety & Compliance
+
+Unlike traditional Retrieval-Augmented Generation (RAG) systems, this project never generates maintenance procedures.
+
+The LLM:
+
+- does not rewrite manuals
+- does not summarize procedures
+- does not modify certified documentation
+
+Instead, it performs semantic ranking only, ensuring technicians always verify work using the official certified maintenance manuals.
+
+---
+
+# Project Results
+
+## Synthetic Benchmark
+
+- 8,229 maintenance tasks
+- 49,643 evaluation queries
+- 91.64% Hit@5 retrieval accuracy
+- Robust against spelling mistakes
+- Consistent >90% Hit@5 using compact LLMs
+
+---
+
+## Human Evaluation
+
+- 10 licensed Aircraft Maintenance Technicians
+- English and Korean queries
+- 90.9% Top-10 retrieval success
+- Average lookup time: **18 seconds**
+
+---
+
+## Operational Impact
+
+Compared with traditional manual lookup:
+
+- Lookup time reduced from 6–15 minutes to approximately 18 seconds
+- More than 95% reduction in search time
+- 96.6% of successful searches completed within one minute
+
+---
+
+# Challenges
+
+Some retrieval failures occurred due to:
+
+- Similar maintenance task titles
+- Context-dependent procedures
+- Aviation terminology ambiguity
+- Cross-lingual translation differences
+
+Future improvements include incorporating procedural context and richer multilingual support.
+
+---
+
+# Future Improvements
+
+- Context-aware retrieval
+- Multimodal maintenance queries
+- Cross-document linking
+- Technician feedback learning
+- Interactive maintenance assistant
+
+---
+
+# Repository Structure
+
+```
+Maintenance-Task-Search-System/
+
+├── data/
+├── embeddings/
+├── parser/
+├── retrieval/
+├── reranker/
+├── evaluation/
+├── notebooks/
+├── app/
+├── docs/
+└── README.md
 ```
 
 ---
 
-## Core Pipeline Example
+# Resume Summary
 
-```python
-from langchain_community.document_loaders import PyPDFLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.vectorstores import Chroma
-from langchain_community.llms import Ollama
-
-# Load the PDF
-loader = PyPDFLoader("manual.pdf")
-documents = loader.load()
-
-# Split the document
-text_splitter = RecursiveCharacterTextSplitter(
-    chunk_size=1000,
-    chunk_overlap=100
-)
-
-chunks = text_splitter.split_documents(documents)
-
-# Create local embeddings
-embedding_model = HuggingFaceEmbeddings(
-    model_name="sentence-transformers/all-MiniLM-L6-v2"
-)
-
-# Store embeddings locally
-vector_store = Chroma.from_documents(
-    documents=chunks,
-    embedding=embedding_model,
-    persist_directory="./chroma_db"
-)
-
-# Load the local language model
-llm = Ollama(model="phi3")
-
-# Retrieve relevant context
-query = "What are the common causes of corrosion on an aircraft?"
-retrieved_documents = vector_store.similarity_search(query, k=3)
-
-context = "\n\n".join(
-    document.page_content for document in retrieved_documents
-)
-
-prompt = f"""
-You are an aviation maintenance document assistant.
-
-Answer the question using only the provided context.
-If the answer is not available in the context, state that the information
-was not found in the retrieved document sections.
-
-Context:
-{context}
-
-Question:
-{query}
-
-Answer:
-"""
-
-response = llm.invoke(prompt)
-
-print(response)
-```
-
-The exact implementation in the notebook may differ depending on the installed LangChain version.
-
----
-
-## Current Features
-
-- Local PDF ingestion
-- Recursive text chunking
-- Overlapping document segments
-- Local semantic embeddings
-- Persistent ChromaDB storage
-- Top-K semantic retrieval
-- Local response generation
-- Context-constrained prompting
-- No external LLM API required during inference
-
----
-
-## Current Limitations
-
-- The project is currently notebook-based.
-- It uses a limited document collection.
-- The generated response does not yet display page-level citations.
-- Retrieval relevance has not been formally evaluated.
-- Answer groundedness and correctness have not been formally measured.
-- The system does not verify whether a manual revision is current.
-- The project does not include authentication or role-based access control.
-- The system has not been validated for operational aircraft maintenance use.
-- A local model may still generate incomplete or unsupported information.
-- Performance depends on available hardware.
-
----
-
-## Planned Improvements
-
-### Retrieval Improvements
-
-- Add hybrid keyword and semantic search
-- Add a cross-encoder reranker
-- Compare different chunk sizes and overlaps
-- Add metadata filtering
-- Add document-type filtering
-- Support multiple manuals
-
-### Answer Quality
-
-- Add page-number and document citations
-- Add confidence-based refusal
-- Add groundedness evaluation
-- Add verified question-and-answer test cases
-- Compare multiple local language models
-- Track retrieval precision and response latency
-
-### Application Development
-
-- Build a FastAPI backend
-- Create a technician-facing web interface
-- Add document upload support
-- Add query history
-- Add source preview panels
-- Add feedback collection
-
-### Security and Governance
-
-- Add role-based access control
-- Add encrypted storage
-- Add audit logging
-- Add model-version tracking
-- Add document-revision tracking
-- Add access restrictions by document type
-
-### Deployment
-
-- Add Docker support
-- Add environment configuration
-- Document minimum hardware requirements
-- Benchmark CPU and GPU performance
-- Add automated tests
-
----
-
-## Evaluation Plan
-
-A future evaluation dataset should contain:
-
-- Maintenance questions
-- Verified reference answers
-- Relevant document sections
-- Correct page numbers
-- Expected refusal cases
-
-The system can then be evaluated on:
-
-- Retrieval relevance
-- Context precision
-- Context recall
-- Answer groundedness
-- Answer correctness
-- Citation accuracy
-- Refusal accuracy
-- Response latency
-
-No evaluation metrics are currently claimed for this prototype.
-
----
-
-## Responsible Use
-
-This project is intended as a document-search and research prototype.
-
-Users should always verify generated information against:
-
-- The current approved maintenance manual
-- Applicable Airworthiness Directives
-- Service Bulletins
-- Engineering orders
-- Regulatory requirements
-- Authorized organizational procedures
-
-The assistant should not be used as the sole basis for an aircraft maintenance action, inspection decision, release-to-service decision, or safety-critical judgment.
-
----
-
-## Why This Project Matters
-
-This project demonstrates how local AI can support technical document retrieval while providing greater control over sensitive documentation.
-
-It also shows that a useful RAG system depends on more than the language model. Document preparation, chunking, metadata, retrieval quality, citations, evaluation, access control, and responsible-use design are all important parts of the system.
-
----
+Built an AI-powered semantic retrieval system for aircraft maintenance technicians using multilingual embeddings, dense vector search, Vision-Language document parsing, and LLM-based re-ranking to accelerate certified maintenance task discovery while preserving regulatory compliance.
