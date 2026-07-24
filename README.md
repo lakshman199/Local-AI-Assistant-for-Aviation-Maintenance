@@ -1,5 +1,4 @@
-# Aircraft Maintenance Task Search System
-### Compliance-Preserving AI Retrieval System for Aircraft Maintenance Manuals
+# Compliance-Preserving AI Retrieval System for Aircraft Maintenance Manuals
 
 An AI-powered semantic retrieval system that helps Aircraft Maintenance Technicians (AMTs) quickly locate certified maintenance procedures using natural-language queries while preserving regulatory compliance.
 
